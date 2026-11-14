@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>座号查姓名</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC",
+      "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    color: #1b2233;
+    min-height: 100vh;
+    background:
+      radial-gradient(900px 520px at 12% -10%, #e8ecff 0%, transparent 60%),
+      radial-gradient(820px 520px at 108% 6%, #e3f4ff 0%, transparent 55%),
+      #f5f7fb;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .app {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 40px 20px 72px;
+  }
+
+  header { padding: 0 4px 22px; }
+  h1 {
+    margin: 0 0 8px;
+    font-size: 30px;
+    letter-spacing: -0.5px;
+    font-weight: 700;
+  }
+  .sub { margin: 0; color: #7c869b; font-size: 15px; }
+
+  .panel {
+    background: rgba(255, 255, 255, 0.88);
+    border: 1px solid #e9edf6;
+    border-radius: 20px;
+    padding: 22px;
+    box-shadow: 0 12px 34px rgba(32, 45, 90, 0.06);
+    margin-bottom: 18px;
+    backdrop-filter: blur(10px);
+  }
+
+  .panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .panel-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #59637a;
+    letter-spacing: 0.4px;
+    display: flex;
+    align-items: center;
+  }
+
+  .text-btn {
+    border: none;
+    background: none;
+    color: #8a93a8;
+    font-size: 13px;
+    font-family: inherit;
+    padding: 5px 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.15s;
+  }
+  .text-btn:hover { color: #4f63e0; background: #eef1ff; }
+
+  textarea {
+    width: 100%;
+    min-height: 94px;
+    padding: 14px 16px;
+    border: 1.5px solid #e4e9f4;
+    border-radius: 14px;
+    background: #fbfcff;
+    font-family: inherit;
+    font-size: 20px;
+    line-height: 1.6;
+    color: #1b2233;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+  }
+  textarea::placeholder { color: #b3bacb; font-size: 16px; }
+  textarea:focus {
+    background: #fff;
+    border-color: #8f9dff;
+    box-shadow: 0 0 0 4px rgba(91, 108, 255, 0.12);
+  }
+
+  .hint {
+    margin-top: 10px;
+    font-size: 12.5px;
+    color: #9aa3b8;
+    line-height: 1.6;
+  }
+  .hint b { color: #6b7690; font-weight: 600; }
+
+  .count-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 26px;
+    height: 24px;
+    padding: 0 9px;
+    margin-left: 8px;
+    border-radius: 999px;
+    background: #eef1ff;
+    color: #4f63e0;
+    font-size: 12.5px;
+    font-weight: 700;
+  }
+
+  .seg {
+    display: flex;
+    gap: 2px;
+    padding: 3px;
+    background: #f1f4fa;
+    border-radius: 10px;
+  }
+  .seg button {
+    border: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 12px;
+    color: #7c869b;
+    padding: 6px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.15s;
+  }
+  .seg button.active {
+    background: #fff;
+    color: #2a3550;
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(30, 40, 80, 0.12);
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-content: flex-start;
+    min-height: 88px;
+    padding: 4px 0 6px;
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 14px 7px 7px;
+    background: #f4f6ff;
+    border: 1px solid #dfe5ff;
+    border-radius: 999px;
+    animation: pop 0.28s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+  }
+  .chip .seat {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 26px;
+    height: 26px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: #fff;
+    color: #6a78c9;
+    font-size: 11.5px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .chip .name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2a3550;
+    letter-spacing: 0.2px;
+  }
+
+  @keyframes pop {
+    from { opacity: 0; transform: translateY(6px) scale(0.96); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  .empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 80px;
+    color: #a3abbd;
+    font-size: 14px;
+    border: 1.5px dashed #e6eaf4;
+    border-radius: 14px;
+  }
+
+  .actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 14px;
+  }
+  .copy-btn {
+    border: none;
+    border-radius: 12px;
+    padding: 12px 28px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+    cursor: pointer;
+    background: linear-gradient(135deg, #5b6cff, #7a5cff);
+    box-shadow: 0 8px 18px rgba(91, 108, 255, 0.3);
+    transition: transform 0.15s, box-shadow 0.15s, background 0.15s, color 0.15s;
+  }
+  .copy-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 22px rgba(91, 108, 255, 0.38);
+  }
+  .copy-btn:active:not(:disabled) { transform: translateY(0) scale(0.99); }
+  .copy-btn:disabled {
+    background: #e2e6ef;
+    color: #a4abbd;
+    box-shadow: none;
+    cursor: not-allowed;
+  }
+
+  .roster-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+    gap: 8px;
+  }
+  .roster-grid.collapsed { display: none; }
+
+  .roster-item {
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+    padding: 9px 10px;
+    border-radius: 10px;
+    border: 1px solid #eef1f8;
+    background: #fafbfe;
+    cursor: pointer;
+    font-family: inherit;
+    text-align: left;
+    overflow: hidden;
+    transition: 0.15s;
+  }
+  .roster-item:hover { border-color: #cdd5ff; background: #f5f7ff; }
+  .roster-item.selected { background: #eef1ff; border-color: #aab8ff; }
+  .roster-item .r-seat {
+    font-size: 11px;
+    color: #9aa3b8;
+    min-width: 16px;
+    font-variant-numeric: tabular-nums;
+  }
+  .roster-item.selected .r-seat { color: #5b6cff; }
+  .roster-item .r-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #2a3550;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .roster-item.selected .r-name { color: #3b52d4; font-weight: 600; }
+
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 36px;
+    transform: translate(-50%, 14px);
+    background: #222a3d;
+    color: #fff;
+    font-size: 14px;
+    padding: 11px 20px;
+    border-radius: 12px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s, transform 0.25s;
+    box-shadow: 0 12px 30px rgba(15, 20, 40, 0.25);
+    z-index: 50;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  @media (max-width: 560px) {
+    .app { padding: 26px 14px 56px; }
+    h1 { font-size: 24px; }
+    .sub { font-size: 13.5px; }
+    .panel { padding: 17px; border-radius: 16px; }
+    textarea { font-size: 18px; min-height: 84px; }
+    .panel-head { flex-wrap: wrap; gap: 8px; }
+    .chips { min-height: 72px; }
+    .roster-grid { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); }
+  }
+</style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>座号查姓名</h1>
+      <p class="sub">输入座号，快速查看并复制对应同学的姓名</p>
+    </header>
+
+    <section class="panel">
+      <div class="panel-head">
+        <span class="panel-title">输入座号</span>
+        <button type="button" class="text-btn" id="clearBtn">清空</button>
+      </div>
+      <textarea id="seatInput" placeholder="例如：1, 3, 5-8" autocomplete="off" spellcheck="false"></textarea>
+      <div class="hint">支持逗号、空格、换行分隔，也可用 <b>5-8</b> 表示座号范围；超出 1–51 的座号会自动忽略。</div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <span class="panel-title">查询结果<span class="count-pill" id="count">0</span></span>
+        <div class="seg" id="sepSeg">
+          <button type="button" data-sep="、" class="active">顿号</button>
+          <button type="button" data-sep="&#10;">换行</button>
+          <button type="button" data-sep=" ">空格</button>
+        </div>
+      </div>
+
+      <div class="chips" id="resultList" aria-live="polite">
+        <div class="empty">还没有输入座号</div>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="copy-btn" id="copyBtn" disabled>复制姓名</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <span class="panel-title">全班名单</span>
+        <button type="button" class="text-btn" id="rosterToggle">收起</button>
+      </div>
+      <div class="roster-grid" id="rosterGrid"></div>
+    </section>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+
+<script>
+  const NAMES = [
+    "陈皓明","陈嘉俊","陈蕾","陈冉","董馨怡","豆欣怡","高煦瑶","高扬","郭紫轩","胡振邦",
+    "黄朝蔓","黄涛","姜锦鸿","金欣烨","蓝家涛","李浩","李泓圳","李欣玥","林安淇","林慕澄",
+    "林馨慧","林妍欣","林以煊","林昭阳","刘晨旭","柳景晨","宁雪情","阮景胜","汪雅楠","万香玲",
+    "王芳元","王鑫楠","翁可馨","肖雅颉","肖媛妮","熊正琰","闫福浩","杨子尧","游依涵","张鸿涛",
+    "张佩瑶","郑邦浩","钟婉菱","周俊熙","周筱琰","朱梦媛","卓靖芳","曾昭凯","余欣怡","苏雯蕾",
+    "严心玥"
+  ];
+  const MAX = NAMES.length;
+
+  const input = document.getElementById("seatInput");
+  const resultList = document.getElementById("resultList");
+  const countEl = document.getElementById("count");
+  const copyBtn = document.getElementById("copyBtn");
+  const clearBtn = document.getElementById("clearBtn");
+  const rosterGrid = document.getElementById("rosterGrid");
+  const rosterToggle = document.getElementById("rosterToggle");
+  const sepSeg = document.getElementById("sepSeg");
+  const toast = document.getElementById("toast");
+
+  let separator = "、";
+  let currentSeats = [];
+  let toastTimer = null;
+  let copyTimer = null;
+
+  function parseSeats(text) {
+    if (!text) return [];
+
+    // 先把 5-8 / 5~8 / 5至8 这类范围展开
+    const expanded = text.replace(
+      /(\d+)\s*(?:-|–|—|~|～|至|到)\s*(\d+)/g,
+      (_, a, b) => {
+        let start = Math.min(parseInt(a, 10), parseInt(b, 10));
+        let end = Math.max(parseInt(a, 10), parseInt(b, 10));
+        start = Math.max(1, Math.min(start, MAX));
+        end = Math.max(1, Math.min(end, MAX));
+        const arr = [];
+        for (let i = start; i <= end; i++) arr.push(i);
+        return " " + arr.join(" ") + " ";
+      }
+    );
+
+    const set = new Set();
+    (expanded.match(/\d+/g) || []).forEach((n) => {
+      const v = parseInt(n, 10);
+      if (v >= 1 && v <= MAX) set.add(v);
+    });
+
+    return [...set].sort((a, b) => a - b);
+  }
+
+  function render() {
+    currentSeats = parseSeats(input.value);
+    countEl.textContent = currentSeats.length;
+
+    resultList.innerHTML = "";
+    if (currentSeats.length === 0) {
+      const empty = document.createElement("div");
+      empty.className = "empty";
+      empty.textContent = "还没有输入座号";
+      resultList.appendChild(empty);
+    } else {
+      currentSeats.forEach((seat, i) => {
+        const chip = document.createElement("div");
+        chip.className = "chip";
+        chip.style.animationDelay = Math.min(i * 18, 320) + "ms";
+
+        const seatEl = document.createElement("span");
+        seatEl.className = "seat";
+        seatEl.textContent = seat;
+
+        const nameEl = document.createElement("span");
+        nameEl.className = "name";
+        nameEl.textContent = NAMES[seat - 1];
+
+        chip.appendChild(seatEl);
+        chip.appendChild(nameEl);
+        resultList.appendChild(chip);
+      });
+    }
+
+    copyBtn.disabled = currentSeats.length === 0;
+    copyBtn.textContent = "复制姓名";
+
+    const selected = new Set(currentSeats);
+    rosterGrid.querySelectorAll(".roster-item").forEach((el) => {
+      el.classList.toggle("selected", selected.has(Number(el.dataset.seat)));
+    });
+  }
+
+  function buildRoster() {
+    const fragment = document.createDocumentFragment();
+    NAMES.forEach((name, i) => {
+      const seat = i + 1;
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "roster-item";
+      btn.dataset.seat = seat;
+
+      const seatEl = document.createElement("span");
+      seatEl.className = "r-seat";
+      seatEl.textContent = seat;
+
+      const nameEl = document.createElement("span");
+      nameEl.className = "r-name";
+      nameEl.textContent = name;
+
+      btn.appendChild(seatEl);
+      btn.appendChild(nameEl);
+      btn.addEventListener("click", () => toggleSeat(seat));
+      fragment.appendChild(btn);
+    });
+    rosterGrid.appendChild(fragment);
+  }
+
+  function toggleSeat(seat) {
+    const set = new Set(parseSeats(input.value));
+    if (set.has(seat)) {
+      set.delete(seat);
+    } else {
+      set.add(seat);
+    }
+    input.value = [...set].sort((a, b) => a - b).join("、");
+    render();
+  }
+
+  function showToast(message) {
+    toast.textContent = message;
+    toast.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove("show"), 1800);
+  }
+
+  function legacyCopy(text) {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.top = "0";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    let ok = false;
+    try {
+      ok = document.execCommand("copy");
+    } catch (e) {
+      ok = false;
+    }
+    ta.remove();
+    return ok;
+  }
+
+  async function copyNames() {
+    if (currentSeats.length === 0) return;
+
+    const text = currentSeats.map((seat) => NAMES[seat - 1]).join(separator);
+    let ok = false;
+
+    // APK 壳应用：优先调用原生剪贴板
+    if (window.AndroidBridge && typeof window.AndroidBridge.copyText === "function") {
+      try {
+        window.AndroidBridge.copyText(text);
+        ok = true;
+      } catch (e) {
+        ok = false;
+      }
+    }
+
+    if (!ok && navigator.clipboard && window.isSecureContext) {
+      try {
+        await navigator.clipboard.writeText(text);
+        ok = true;
+      } catch (e) {
+        ok = false;
+      }
+    }
+    if (!ok) ok = legacyCopy(text);
+
+    if (ok) {
+      copyBtn.textContent = "已复制";
+      clearTimeout(copyTimer);
+      copyTimer = setTimeout(() => {
+        copyBtn.textContent = "复制姓名";
+      }, 1400);
+      showToast("已复制 " + currentSeats.length + " 个姓名");
+    } else {
+      showToast("复制失败，请手动选择文字");
+    }
+  }
+
+  input.addEventListener("input", render);
+
+  clearBtn.addEventListener("click", () => {
+    input.value = "";
+    render();
+    input.focus();
+  });
+
+  copyBtn.addEventListener("click", copyNames);
+
+  sepSeg.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-sep]");
+    if (!btn) return;
+    separator = btn.dataset.sep;
+    sepSeg.querySelectorAll("button").forEach((b) => b.classList.toggle("active", b === btn));
+  });
+
+  rosterToggle.addEventListener("click", () => {
+    const collapsed = rosterGrid.classList.toggle("collapsed");
+    rosterToggle.textContent = collapsed ? "展开" : "收起";
+  });
+
+  buildRoster();
+  render();
+  input.focus();
+</script>
+</body>
+</html>

@@ -505,7 +505,17 @@
     const text = currentSeats.map((seat) => NAMES[seat - 1]).join(separator);
     let ok = false;
 
-    if (navigator.clipboard && window.isSecureContext) {
+    // APK 壳应用：优先调用原生剪贴板
+    if (window.AndroidBridge && typeof window.AndroidBridge.copyText === "function") {
+      try {
+        window.AndroidBridge.copyText(text);
+        ok = true;
+      } catch (e) {
+        ok = false;
+      }
+    }
+
+    if (!ok && navigator.clipboard && window.isSecureContext) {
       try {
         await navigator.clipboard.writeText(text);
         ok = true;
